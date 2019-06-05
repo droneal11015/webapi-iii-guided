@@ -9,14 +9,20 @@ const hubsRouter = require('./hubs/hubs-router.js');
 
 const server = express();
 
+//global middleware
 server.use(express.json());
 server.use(helmet());
 server.use(logger('dev'));
 server.use(cors());
+server.use(methodLogger);
+//server.use(lockout);
+//server.use(timecrunch);
 
+//route handler
 server.use('/api/hubs', hubsRouter);
 
-server.get('/', (req, res) => {
+//route handler
+server.get('/', /*add middleware here-->*/ addName, (req, res) => {
   const nameInsert = (req.name) ? ` ${req.name}` : '';
 
   res.send(`
@@ -24,5 +30,31 @@ server.get('/', (req, res) => {
     <p>Welcome${nameInsert} to the Lambda Hubs API</p>
     `);
 });
+
+//global middleware 
+function methodLogger(req, res, next){
+  console.log(`${req.method} Request. Testing`);
+  next();
+}
+
+//local middleware
+function addName(req, res, next){
+  req.name = req.name || 'Dani';
+  next();
+}
+
+function lockout(req, res, next){
+  res.status(403).json({ message: 'API lockout!'})
+}
+
+// function timecrunch(req, res, next){
+//   const seconds = new Date().getSeconds()
+
+//   if (seconds % 3 === 0){
+//     res.status(403).json({ message: 'You shall not pass!'});
+//   } else {
+//     next();
+//   }
+// }
 
 module.exports = server;
